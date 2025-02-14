@@ -1,9 +1,9 @@
 ﻿using Dapper;
-using FHIRObjects.SQLRepoDefinitions;
+using FhirDomain.SQLRepoDefinitions;
 using Hl7.Fhir.Model;
 using Microsoft.Data.SqlClient;
 
-namespace FHIRObjects.SQLRepos
+namespace FhirDataAccess.SQLRepos
 {
     public class PatientRepository : IPatientRepository
     {
@@ -20,10 +20,12 @@ namespace FHIRObjects.SQLRepos
             {
                 using (SqlConnection cn = new SqlConnection())
                 {
-                    string query = "SELECT * FROM Addendum WHERE id = @id";
+                    string query = "SELECT * FROM Demographics WHERE PatientID = @id";
 
                     var patient = cn.QueryFirstOrDefault<Patient>(query, new { id = name }) ?? new Patient();
-
+                    
+                    Patient p = new Patient();
+                    
                     return patient;
                 }
             }
