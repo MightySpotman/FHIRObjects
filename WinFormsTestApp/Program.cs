@@ -1,4 +1,4 @@
-namespace TestApp
+namespace WinFormsTestApp
 {
     internal static class Program
     {
@@ -11,7 +11,7 @@ namespace TestApp
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
-        //    Application.Run(new TestForm1());
+            Application.Run(new CodeTester());
         }
     }
 }

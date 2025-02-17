@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace TestApp1.Properties
+namespace WindowsFormsApp1.Properties
 {
 
 
