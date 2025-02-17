@@ -16,9 +16,10 @@ namespace WinFormsTestApp
 
         private void btnTest1_Click(object sender, EventArgs e)
         {
+            CreateFhirBundleFromCcda("Transition_of_Care_Referral_Summary.xml");
         }
 
-        static void Main(string filename)
+        static void CreateFhirBundleFromCcda(string filename)
         {
             // Load the CCD-A document
             string ccdaContent = File.ReadAllText(filename);
@@ -28,19 +29,21 @@ namespace WinFormsTestApp
             //var cCda = XDocument.Parse(cCdaText); // or
             XDocument x = XDocument.Load(filename);
 
-var bundle = executor.Execute(x);
+            var bundle = executor.Execute(x);
+
 
             // Convert the CCD-A document to FHIR bundles
-           // DarenaSolutions.CCdaToFhirConverter converter = new CCdaToFhirConverter();
+            // DarenaSolutions.CCdaToFhirConverter converter = new CCdaToFhirConverter();
             //var bundles = converter.Convert(ccdaContent);
-            
+
             // Serialize the FHIR bundles to JSON
             var serializer = new FhirJsonSerializer();
-            foreach (var bundle in bundles)
-            {
-                string json = serializer.SerializeToString(bundle);
-                Console.WriteLine(json);
-            }
+            //foreach (var bundle in bundles)
+            //{
+            string json = serializer.SerializeToString(bundle);
+            //txtTest1.Text = json;
+            Console.WriteLine(json);
+            //}
         }
 
         //void test()
