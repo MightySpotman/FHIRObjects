@@ -31,6 +31,7 @@
             btnTest1 = new Button();
             txtCcd = new TextBox();
             txtFhir = new TextBox();
+            btnClearTextboxes = new Button();
             SuspendLayout();
             // 
             // btnTest1
@@ -51,6 +52,7 @@
             txtCcd.ScrollBars = ScrollBars.Both;
             txtCcd.Size = new Size(698, 805);
             txtCcd.TabIndex = 1;
+            txtCcd.WordWrap = false;
             // 
             // txtFhir
             // 
@@ -60,12 +62,24 @@
             txtFhir.ScrollBars = ScrollBars.Both;
             txtFhir.Size = new Size(698, 805);
             txtFhir.TabIndex = 2;
+            txtFhir.WordWrap = false;
+            // 
+            // btnClearTextboxes
+            // 
+            btnClearTextboxes.Location = new Point(22, 161);
+            btnClearTextboxes.Name = "btnClearTextboxes";
+            btnClearTextboxes.Size = new Size(289, 100);
+            btnClearTextboxes.TabIndex = 3;
+            btnClearTextboxes.Text = "Clear Textboxes";
+            btnClearTextboxes.UseVisualStyleBackColor = true;
+            btnClearTextboxes.Click += btnClearTextboxes_Click;
             // 
             // CodeTester
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1842, 871);
+            Controls.Add(btnClearTextboxes);
             Controls.Add(txtFhir);
             Controls.Add(txtCcd);
             Controls.Add(btnTest1);
@@ -80,5 +94,6 @@
         private Button btnTest1;
         private TextBox txtCcd;
         private TextBox txtFhir;
+        private Button btnClearTextboxes;
     }
 }

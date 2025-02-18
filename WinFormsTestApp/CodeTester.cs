@@ -35,24 +35,75 @@ namespace WinFormsTestApp
 
         void CreateFhirBundleFromCcda(string filename)
         {
-            // Load the CCD document
-            string ccdaContent = File.ReadAllText(filename);
-            txtCcd.Text = ccdaContent;
+            try
+            {
+                ClearTextboxes();
 
-            //Create a new instance of the converter
-            //**Last parameter specifies PatientOnly conversion - don't look for Organization
-            var executor = new CCdaToFhirExecutor(null, null, true, true);
+                // Load the CCD document
+                string ccdSource = File.ReadAllText(filename);
 
-            XDocument x = XDocument.Load(filename);
+                //Make any modifications to the CCD content here
+                string ccdCleaned = CleanCcdLanguage(ccdSource);
+                ccdCleaned = CleanGender(ccdCleaned);
 
-            //Convert the CCD into FHIR JSON bundle
-            var bundle = executor.Execute(x);
+                //let us see the original content
+                txtCcd.Text = ccdCleaned;
 
-            // Serialize the FHIR bundles to JSON
-            var serializer = new FhirJsonSerializer();
-            string json = serializer.SerializeToString(bundle);
+                //Create a new instance of the converter
+                //**Last parameter specifies PatientOnly conversion - don't look for Organization
+                var executor = new CCdaToFhirExecutor(null, null, true, true);
 
-            txtFhir.Text = json;
+                //The converter expects an XDocument
+                XDocument x = XDocument.Parse(ccdCleaned);
+
+                //Convert the CCD into FHIR JSON bundle
+                var bundle = executor.Execute(x);
+
+                // Serialize the FHIR bundles to JSON
+                var serializer = new FhirJsonSerializer();
+                string json = serializer.SerializeToString(bundle);
+
+                //Display the JSON FHIR bundle
+                txtFhir.Text = json;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        string CleanCcdLanguage(string original)
+        {
+            //The converter fails on LanguageCode if value is "fr-CA" or "fr-CN"
+            //So we replace it with "fr"
+            string ccdModified = original.Replace("fr-CA", "fr");
+            ccdModified = ccdModified.Replace("fr-CN", "fr");
+
+            return ccdModified;
+        }
+
+        string CleanGender(string original)
+        {
+            //The converter fails on if the AdministrativeGenderCode doesn't include the DisplayName
+            //So we add the display name for each gender
+
+            //**check what happens if the display name is already there**
+
+            string ccdModified = original.Replace("<administrativeGenderCode code=\"F\"", "<administrativeGenderCode code=\"F\" displayName=\"Female\"");
+            ccdModified = original.Replace(@"<administrativeGenderCode code=""M""", @"<administrativeGenderCode code=""M"" displayname=""Male""");
+
+            return ccdModified;
+        }
+
+        private void btnClearTextboxes_Click(object sender, EventArgs e)
+        {
+            ClearTextboxes();
+        }
+
+        private void ClearTextboxes()
+        {
+            txtCcd.Text = "";
+            txtFhir.Text = "";
         }
     }
 }
