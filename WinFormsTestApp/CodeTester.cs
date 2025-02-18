@@ -16,45 +16,43 @@ namespace WinFormsTestApp
 
         private void btnTest1_Click(object sender, EventArgs e)
         {
-            CreateFhirBundleFromCcda("Transition_of_Care_Referral_Summary.xml");
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.InitialDirectory = @"..\\..\\..\\CCDA_Samples";
+                openFileDialog.Filter = "XML files (*.xml)|*.xml";
+                openFileDialog.FilterIndex = 1;
+                openFileDialog.RestoreDirectory = true;
+
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    // Get the path of specified file
+                    string filePath = openFileDialog.FileName;
+
+                    CreateFhirBundleFromCcda(filePath);
+                }
+            }
         }
 
-        static void CreateFhirBundleFromCcda(string filename)
+        void CreateFhirBundleFromCcda(string filename)
         {
-            // Load the CCD-A document
+            // Load the CCD document
             string ccdaContent = File.ReadAllText(filename);
+            txtCcd.Text = ccdaContent;
 
-            var executor = new CCdaToFhirExecutor();
+            //Create a new instance of the converter
+            //**Last parameter specifies PatientOnly conversion - don't look for Organization
+            var executor = new CCdaToFhirExecutor(null, null, true, true);
 
-            //var cCda = XDocument.Parse(cCdaText); // or
             XDocument x = XDocument.Load(filename);
 
+            //Convert the CCD into FHIR JSON bundle
             var bundle = executor.Execute(x);
-
-
-            // Convert the CCD-A document to FHIR bundles
-            // DarenaSolutions.CCdaToFhirConverter converter = new CCdaToFhirConverter();
-            //var bundles = converter.Convert(ccdaContent);
 
             // Serialize the FHIR bundles to JSON
             var serializer = new FhirJsonSerializer();
-            //foreach (var bundle in bundles)
-            //{
             string json = serializer.SerializeToString(bundle);
-            //txtTest1.Text = json;
-            Console.WriteLine(json);
-            //}
+
+            txtFhir.Text = json;
         }
-
-        //void test()
-        //{
-        //    Patient p = new Patient();
-
-        //    var serializer = new FhirJsonSerializer();
-        //    string json = serializer.SerializeToString(p);
-        //    // p.Gender = "Male";
-        //    // Set the textbox text to the JSON representation
-        //    txtTest1.Text = json;
-        //}
     }
 }
