@@ -28,23 +28,29 @@ namespace WinFormsTestApp
                     // Get the path of specified file
                     string filePath = openFileDialog.FileName;
 
-                    CreateFhirBundleFromCcda(filePath);
+                    ClearTextboxes();
+
+                    string json = CreateFhirBundleFromCcda(filePath);
+
+                    //Display the JSON FHIR bundle
+                    txtFhir.Text = json;
                 }
             }
         }
 
-        void CreateFhirBundleFromCcda(string filename)
+        /// <summary>
+        /// Takes a CCD in XML format and returns a FHIR JSON bundle
+        /// </summary>
+        /// <param name="filename"></param>
+        string CreateFhirBundleFromCcda(string filename)
         {
             try
             {
-                ClearTextboxes();
-
                 // Load the CCD document
                 string ccdSource = File.ReadAllText(filename);
 
-                //Make any modifications to the CCD content here
+                //Make any modifications to the XML source CCD content here
                 string ccdCleaned = CleanCcdLanguage(ccdSource);
-                ccdCleaned = CleanGender(ccdCleaned);
 
                 //let us see the original content
                 txtCcd.Text = ccdCleaned;
@@ -56,6 +62,9 @@ namespace WinFormsTestApp
                 //The converter expects an XDocument
                 XDocument x = XDocument.Parse(ccdCleaned);
 
+                //more cleanup - look for missing attribute in administrativeGenderCode
+                x = CleanGender(x);
+
                 //Convert the CCD into FHIR JSON bundle
                 var bundle = executor.Execute(x);
 
@@ -63,15 +72,20 @@ namespace WinFormsTestApp
                 var serializer = new FhirJsonSerializer();
                 string json = serializer.SerializeToString(bundle);
 
-                //Display the JSON FHIR bundle
-                txtFhir.Text = json;
+                return json;
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
+                return null;
             }
         }
 
+        /// <summary>
+        /// Fixes a problem with variants of French that fail in the converter
+        /// </summary>
+        /// <param name="original"></param>
+        /// <returns></returns>
         string CleanCcdLanguage(string original)
         {
             //The converter fails on LanguageCode if value is "fr-CA" or "fr-CN"
@@ -82,17 +96,51 @@ namespace WinFormsTestApp
             return ccdModified;
         }
 
-        string CleanGender(string original)
+        /// <summary>
+        ///The converter fails on if the AdministrativeGenderCode doesn't include the DisplayName
+        ///So we add the display name for each gender if it's missing
+        /// </summary>
+        /// <param name="x">XDocument of complete CCD</param>
+        /// <returns>Modified (if needed) XDocument of complete CCD</returns>
+        XDocument CleanGender(XDocument x)
         {
-            //The converter fails on if the AdministrativeGenderCode doesn't include the DisplayName
-            //So we add the display name for each gender
+            // Define the namespace or the node search will fail
+            XNamespace ns = "urn:hl7-org:v3";
 
-            //**check what happens if the display name is already there**
+            //get the complete administrativeGenderCode node
+            var genderCodeElement = x.Descendants(ns + "administrativeGenderCode").FirstOrDefault();
 
-            string ccdModified = original.Replace("<administrativeGenderCode code=\"F\"", "<administrativeGenderCode code=\"F\" displayName=\"Female\"");
-            ccdModified = original.Replace(@"<administrativeGenderCode code=""M""", @"<administrativeGenderCode code=""M"" displayname=""Male""");
+            if (genderCodeElement != null)
+            {
+                XAttribute displayNameAttribute = genderCodeElement.Attribute("displayName");
 
-            return ccdModified;
+                //the value doesn't exist we've got a problem so add it to the node
+                if (displayNameAttribute == null)
+                {
+                    //retrieve the value of the code attribute so we can add the appropriate displayName
+                    XAttribute codeAttribute = genderCodeElement.Attribute("code");
+                    if (codeAttribute != null)
+                    {
+                        switch (codeAttribute.Value)
+                        {
+                            case "F":
+                                genderCodeElement.Add(new XAttribute("displayName", "Female"));
+                                break;
+                            case "M":
+                                genderCodeElement.Add(new XAttribute("displayName", "Male"));
+                                break;
+                            case "Other":
+                                genderCodeElement.Add(new XAttribute("displayName", "Other"));
+                                break;
+                            case "Unknown":
+                                genderCodeElement.Add(new XAttribute("displayName", "Unknown"));
+                                break;
+                        }
+                    }
+                }
+            }
+
+            return x;
         }
 
         private void btnClearTextboxes_Click(object sender, EventArgs e)
