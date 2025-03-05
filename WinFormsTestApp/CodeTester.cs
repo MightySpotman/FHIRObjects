@@ -1,10 +1,12 @@
 ﻿using System;
 using System.IO;
+using System.Xml;
 using System.Xml.Linq;
 using DarenaSolutions.CCdaToFhirConverter;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir;
+using System.Diagnostics;
 namespace WinFormsTestApp
 {
     public partial class CodeTester : Form
@@ -30,10 +32,25 @@ namespace WinFormsTestApp
 
                     ClearTextboxes();
 
-                    string json = CreateFhirBundleFromCcda(filePath);
+                    if (IsValidXml(filePath))
+                    {
+                        if (ContainsPatientRoleNode(filePath))
+                        {
+                            string json = CreateFhirBundleFromCcda(filePath);
 
-                    //Display the JSON FHIR bundle
-                    txtFhir.Text = json;
+                            //Display the JSON FHIR bundle
+                            txtFhir.Text = json;
+                        }
+                        else
+                        {
+                            txtFhir.Text = "Missing the <patientRole> node";
+                        }
+                    }
+                    else
+                    {
+                        //detail is now done in IsValidXml()
+                        //txtFhir.Text = "*** Not Valid XML ***";
+                    }
                 }
             }
         }
@@ -143,6 +160,91 @@ namespace WinFormsTestApp
             return x;
         }
 
+        public bool IsValidXml(string filename)
+        {
+            try
+            {
+                XmlDocument xmlDoc = new XmlDocument();
+                xmlDoc.Load(filename);
+                return true; // If no exception is thrown, the XML is valid
+            }
+            catch (XmlException ex)
+            {
+                string msg = $"Filename: {filename}\r\n" +
+                    $"XML is invalid.\r\n" +
+                    $"Error Message: {ex.Message}\r\n"; 
+                Debug.WriteLine(msg);
+
+                //just here to make it ease for testing
+                txtFhir.Text = msg;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error Message: {ex.Message}");
+            }
+
+            return false;
+        }
+
+        public static bool ContainsPatientRoleNode(string filename)
+        {
+            try
+            {
+                XmlDocument xmlDoc = new XmlDocument();
+                xmlDoc.Load(filename);
+
+                // Check if the <patientRole> node is present
+                XmlNode patientRoleNode = xmlDoc.SelectSingleNode("//*[local-name()='patientRole']");
+                return patientRoleNode != null;
+            }
+            catch (XmlException)
+            {
+                Debug.WriteLine("The XML file is not valid.");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"An error occurred: {ex.Message}");
+                return false;
+            }
+        }
+
+        public void ProcessDirectory(string directoryPath)
+        {
+            try
+            {
+                txtCcd.Text = "Valid";
+                txtFhir.Text = "InValid";
+
+                // Get all files in the directory
+                string[] files = Directory.GetFiles(directoryPath);
+
+                // Iterate over each file and call the CheckFile method
+                foreach (string file in files)
+                {
+                    if (IsValidXml(file))
+                    {
+                        if (ContainsPatientRoleNode(file))
+                        {
+                            txtCcd.Text = txtCcd.Text + "\r\n" + file;
+                        }
+                        else
+                        {
+                            txtFhir.Text = txtFhir.Text + "\r\n" + file + " ** Missing <patientRole> **";
+                        }
+                    }
+                    else
+                    {
+                        txtFhir.Text = txtFhir.Text + "\r\n" + file + " ** Invalid XML **";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"An error occurred while processing the directory: {ex.Message}");
+            }
+        }
+
         private void btnClearTextboxes_Click(object sender, EventArgs e)
         {
             ClearTextboxes();
@@ -152,6 +254,12 @@ namespace WinFormsTestApp
         {
             txtCcd.Text = "";
             txtFhir.Text = "";
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            ClearTextboxes();
+            ProcessDirectory("E:\\AC\\FHIR\\Deidentified_CCDs");
         }
     }
 }

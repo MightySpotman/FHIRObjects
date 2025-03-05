@@ -32,6 +32,7 @@
             txtCcd = new TextBox();
             txtFhir = new TextBox();
             btnClearTextboxes = new Button();
+            btnCheckForValidFiles = new Button();
             SuspendLayout();
             // 
             // btnTest1
@@ -74,11 +75,22 @@
             btnClearTextboxes.UseVisualStyleBackColor = true;
             btnClearTextboxes.Click += btnClearTextboxes_Click;
             // 
+            // btnCheckForValidFiles
+            // 
+            btnCheckForValidFiles.Location = new Point(22, 370);
+            btnCheckForValidFiles.Name = "btnCheckForValidFiles";
+            btnCheckForValidFiles.Size = new Size(289, 100);
+            btnCheckForValidFiles.TabIndex = 4;
+            btnCheckForValidFiles.Text = "Check for Valid CCDA";
+            btnCheckForValidFiles.UseVisualStyleBackColor = true;
+            btnCheckForValidFiles.Click += button1_Click;
+            // 
             // CodeTester
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1842, 871);
+            Controls.Add(btnCheckForValidFiles);
             Controls.Add(btnClearTextboxes);
             Controls.Add(txtFhir);
             Controls.Add(txtCcd);
@@ -95,5 +107,6 @@
         private TextBox txtCcd;
         private TextBox txtFhir;
         private Button btnClearTextboxes;
+        private Button btnCheckForValidFiles;
     }
 }
